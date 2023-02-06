@@ -15,6 +15,10 @@
 - [Internal/External](#internalexternal)
 - [Interacting with other contracts](#interacting-with-other-contracts)
 - [Immutability of Contracts](#immutability-of-contracts)
+- [Ownable Contracts](#ownable-contracts)
+- [onlyOwner Function Modifier](#onlyowner-function-modifier)
+- [Gas fee](#gas-fee)
+  - [Struct packing to save gas](#struct-packing-to-save-gas)
 
 ### Contract
 Solidity's code is encapsulated in `contracts`. A **contract** is the fundamental building block of Ethereum applications — all variables and functions belong to a contract. All solidity source code should start with a "version pragma" — a declaration of the version of the Solidity compiler this code should use.
@@ -212,6 +216,72 @@ In this way, your contract can interact with any other contract on the Ethereum 
 After deploying a contract to Ethereum, it’s `immutable`, which means that it can never be modified or updated again. The initial code you deploy to a contract is there to stay, permanently, on the blockchain. This is one reason security is such a huge concern in Solidity. If there's a flaw in your contract code, there's no way for you to patch it later. You would have to tell your users to start using a different smart contract address that has the fix.
 
 But this is also a feature of smart contracts. `The code is law`. If you read the code of a smart contract and verify it, you can be sure that every time you call a function it's going to do exactly what the code says it will do. No one can later change that function and give you unexpected results.
+
+### Ownable Contracts
+If function is set `external`, so anyone can call it!!!!!😱
+
+If you still want to set `external` for easily updating, but you want to limit access to it (maybe only the owner of that contract has special privileges), let's use `Ownable`.
+
+Ownable is a contract (from OpenZeppelin). OpenZeppelin is a library of secure and community-vetted smart contracts. So the `Ownable contract` basically does the following:
+
+1. When a contract is created, its constructor sets the `owner` to `msg.sender` (the person who deployed it)
+2. It adds an `onlyOwner` modifier, which can restrict access to certain functions to only the `owner`
+3. It allows you to transfer the contract to a new owner
+> 👉 Note: onlyOwner is such a common requirement for contracts that most Solidity DApps start with a copy/paste of this Ownable contract, and then their first contract inherits from it.
+
+### onlyOwner Function Modifier
+A `function modifier` looks just like a function, but uses the keyword `modifier` instead of the keyword `function`. And it can't be called directly like a function can — instead we can attach the modifier's name at the end of a function definition to change that function's behavior.
+```php
+//modifier function
+modifier onlyOwner() {
+    require(isOwner());
+    _;
+}
+
+//how to call modifier function
+function renounceOwnership() public onlyOwner {
+    emit OwnershipTransferred(_owner, address(0));
+    _owner = address(0);
+}
+```
+Notice the `onlyOwner` modifier on the `renounceOwnership` function. When you call `renounceOwnership`, the code inside `onlyOwner` executes first. Then when it hits the `_;` statement in `onlyOwner`, it goes back and executes the code inside `renounceOwnership`.
+
+So while there are other ways you can use modifiers, one of the most common use-cases is to add a quick `require` check before a function executes.
+
+In the case of `onlyOwner`, adding this modifier to a function makes it so only the owner of the contract (you, if you deployed it) can call that function.
+
+### Gas fee
+In Solidity, your users have to pay every time they execute a function on your DApp using a currency called `gas`. How much gas is required to execute a function depends on how complex that function's logic is. Because running functions costs real money for your users, code optimization is much more important in Ethereum than in other programming languages.
+
+⭕ Why is gas necessary?
+The creators of Ethereum wanted to make sure someone couldn't clog up the network with an infinite loop, or hog all the network resources with really intensive computations. So they made it so transactions aren't free, and users have to pay for computation time as well as storage.
+#### Struct packing to save gas
+Normally there's no benefit to using these sub-types because Solidity reserves 256 bits of storage regardless of the `uint` size. For example, using `uint8` instead of `uint` (uint256) won't save you any gas.
+
+But there's an exception to this: inside `structs`.
+
+If you have multiple `uints` inside a struct, using a smaller-sized `uint` when possible will allow Solidity to pack these variables together to take up less storage. For example:
+```php
+struct NormalStruct {
+  uint a;
+  uint b;
+  uint c;
+}
+
+struct MiniMe {
+  uint32 a;
+  uint32 b;
+  uint c;
+}
+
+// `mini` will cost less gas than `normal` because of struct packing
+NormalStruct normal = NormalStruct(10, 20, 30);
+MiniMe mini = MiniMe(10, 20, 30); 
+```
+You'll also want to cluster identical data types together (i.e. put them next to each other in the struct) so that Solidity can minimize the required storage space. For example, a struct with fields `uint c; uint32 a; uint32 b;` will cost less gas than a struct with fields `uint32 a; uint c; uint32 b;` because the uint32 fields are clustered together.
+
+
+
 
 
 
