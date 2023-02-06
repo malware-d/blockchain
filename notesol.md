@@ -13,6 +13,8 @@
 - [inheritance](#inheritance)
 - [Data location](#data-location)
 - [Internal/External](#internalexternal)
+- [Interacting with other contracts](#interacting-with-other-contracts)
+- [Immutability of Contracts](#immutability-of-contracts)
 
 ### Contract
 Solidity's code is encapsulated in `contracts`. A **contract** is the fundamental building block of Ethereum applications — all variables and functions belong to a contract. All solidity source code should start with a "version pragma" — a declaration of the version of the Solidity compiler this code should use.
@@ -47,7 +49,10 @@ Person[] public people;         //dynamic Array
 ```
 
 ### Function
-In Solidity, functions are `public` by default (anyone (or any other contract) can call contract's function and execute its code). 🆘can vulnerable to attack 🆘
+In Solidity, functions are `public` by default (anyone (or any other contract) can call contract's function and execute its code). 
+
+😱😱😱
+🆘can vulnerable to attack 🆘
 
 👉 Mark your functions as `private` by default, and then only make `public` the functions you want to expose to the world.
 ```php
@@ -81,6 +86,7 @@ Encoding  into binary representation using ***abi.encodePacked()*** ensures that
 //6e91ec6b618bb462a4a6ee5aa2cb0e9cf30f7a052bb467b0ba58b8748c00d2e5
 keccak256(abi.encodePacked("kimkhuongduy"));
 ```
+> 😱 Note: With strings, we have to compare their keccak256 hashes to check equality.
 
 ### Events
 `Events` are a way for your contract to communicate that something happened on the blockchain to your app front-end, which can be 'listening' for certain events and take action when they happen.
@@ -175,6 +181,39 @@ Zombie memory myZombie = zombies[_zombieId];
 In addition to `public` and `private`, Solidity has two more types of visibility for functions: `internal` and `external`.
 - ***internal*** is the same as ***private***, except that it's also accessible to contracts that inherit from this contract (if the function is private -> can not access from contracts which is inheritted).
 - ***external*** is similar to ***public***, except that these functions can **ONLY** be called outside the contract — they can't be called by other functions inside that contract.
+
+### Interacting with other contracts
+For our contract to talk to another contract on the blockchain that we don't own, first we need to define an `interface`.
+```php
+//interface declaration
+contract NumberInterface {
+  function getNum(address _myAddress) public view returns (uint);
+}
+
+//how to use?
+contract MyContract {
+  address NumberInterfaceAddress = 0xab38...
+  // ^ The address of the FavoriteNumber contract on Ethereum
+  NumberInterface numberContract = NumberInterface(NumberInterfaceAddress);
+  // Now `numberContract` is pointing to the other contract
+
+  function someFunction() public {
+    // Now we can call `getNum` from that contract:
+    uint num = numberContract.getNum(msg.sender);
+    // ...and do something with `num` here
+  }
+}
+```
+Declare `interface` similar to `contract` declaration, using keyword `contract`.
+
+In this way, your contract can interact with any other contract on the Ethereum blockchain, as long they expose those functions as `public` or `external`.
+
+### Immutability of Contracts
+After deploying a contract to Ethereum, it’s `immutable`, which means that it can never be modified or updated again. The initial code you deploy to a contract is there to stay, permanently, on the blockchain. This is one reason security is such a huge concern in Solidity. If there's a flaw in your contract code, there's no way for you to patch it later. You would have to tell your users to start using a different smart contract address that has the fix.
+
+But this is also a feature of smart contracts. `The code is law`. If you read the code of a smart contract and verify it, you can be sure that every time you call a function it's going to do exactly what the code says it will do. No one can later change that function and give you unexpected results.
+
+
 
 
 
