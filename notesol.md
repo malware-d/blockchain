@@ -19,6 +19,8 @@
 - [onlyOwner Function Modifier](#onlyowner-function-modifier)
 - [Gas fee](#gas-fee)
   - [Struct packing to save gas](#struct-packing-to-save-gas)
+- [Time Units](#time-units)
+  
 
 ### Contract
 Solidity's code is encapsulated in `contracts`. A **contract** is the fundamental building block of Ethereum applications — all variables and functions belong to a contract. All solidity source code should start with a "version pragma" — a declaration of the version of the Solidity compiler this code should use.
@@ -250,6 +252,24 @@ So while there are other ways you can use modifiers, one of the most common use-
 
 In the case of `onlyOwner`, adding this modifier to a function makes it so only the owner of the contract (you, if you deployed it) can call that function.
 
+Function modifiers can also take arguments. For example:
+```php
+// A mapping to store a user's age:
+mapping (uint => uint) public age;
+
+// Modifier that requires this user to be older than a certain age:
+modifier olderThan(uint _age, uint _userId) {
+  require(age[_userId] >= _age);
+  _;
+}
+
+// Must be older than 16 to drive a car (in the US, at least).
+// We can call the `olderThan` modifier with arguments like so:
+function driveCar(uint _userId) public olderThan(16, _userId) {
+  // Some function logic
+}
+```
+
 ### Gas fee
 In Solidity, your users have to pay every time they execute a function on your DApp using a currency called `gas`. How much gas is required to execute a function depends on how complex that function's logic is. Because running functions costs real money for your users, code optimization is much more important in Ethereum than in other programming languages.
 
@@ -280,6 +300,9 @@ MiniMe mini = MiniMe(10, 20, 30);
 ```
 You'll also want to cluster identical data types together (i.e. put them next to each other in the struct) so that Solidity can minimize the required storage space. For example, a struct with fields `uint c; uint32 a; uint32 b;` will cost less gas than a struct with fields `uint32 a; uint c; uint32 b;` because the uint32 fields are clustered together.
 
+### Time Units
+The variable `now` will return the current unix timestamp of the latest block (the number of seconds that have passed since January 1st 1970).
+> Note: Unix time is traditionally stored in a 32-bit number.
 
 
 
