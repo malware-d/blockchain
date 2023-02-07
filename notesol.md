@@ -1,7 +1,7 @@
 - [Contract](#contract)
 - [State variables \& integers](#state-variables--integers)
 - [Array](#array)
-- [Function](#function)
+- [Function (private-internal/public-external)](#function-private-internalpublic-external)
   - [Function modifiers](#function-modifiers)
 - [Keccack256](#keccack256)
 - [Events](#events)
@@ -22,6 +22,9 @@
 - [Time Units](#time-units)
 - [Saving Gas With 'View' Functions](#saving-gas-with-view-functions)
 - [Storage is Expensive](#storage-is-expensive)
+- [For Loops](#for-loops)
+- [`payable` function](#payable-function)
+- [Withdraws](#withdraws)
   
   
 
@@ -57,7 +60,7 @@ We can declare an array as `public`, and Solidity will automatically create a **
 Person[] public people;         //dynamic Array
 ```
 
-### Function
+### Function (private-internal/public-external)
 In Solidity, functions are `public` by default (anyone (or any other contract) can call contract's function and execute its code). 
 
 😱😱😱
@@ -84,6 +87,12 @@ So in this case we could declare it as a `view` function, meaning it's only view
 function sayHello() public view returns (string memory)
 ```
 and `pure` 👉 you're not even accessing any data. This function doesn't even read from the state of the app.
+
+> ***👉 Remember:***
+> 
+> ***1. `private` means it's only callable from other functions inside the contract; `internal` is like `private` but can also be called by contracts that inherit from this one; `external` can only be called outside the contract; and finally `public` can be called anywhere, both internally and externally.***
+> 
+> ***2. `view` tells us that by running the function, no data will be saved/changed. `pure` tells us that not only does the function not save any data to the blockchain, but it also doesn't read any data from the blockchain. Both of these don't cost any gas to call if they're called externally from outside the contract (but they do cost gas if called internally by another function).***
 
 ### Keccack256
 Keccack256 is a version of SHA3, built-in Ethereum. This hash function only accepts a single input of type `bytes`.
@@ -113,7 +122,7 @@ function add(uint _x, uint _y) public returns (uint) {
 
 ### Mapping & Addresses
 #### Address
-The Ethereum blockchain is made up of `accounts`. Each account has an `address`. An address is owned by a **specific** user (or a smart contract)
+The Ethereum blockchain is made up of `accounts`. Each account has an `address`. An address is owned by a **specific** user (or a smart contract).  An address in Solidity is a `160-bit` value that represents an Ethereum address, which is a unique identifier for an account on the Ethereum blockchain
 #### Mapping
 A mapping is a `key-value` store for storing and looking up data.
 ```php
@@ -336,6 +345,63 @@ function getArray() external pure returns(uint[] memory) {
 ```
 The array will only exist until the end of the function call, and this is a lot cheaper gas-wise than updating an array in `storage` — free if it's a `view` function called externally.
 > ***👉 Note: memory arrays must be created with a predefined length argument.***
+
+### For Loops
+The syntax of `for` loops in Solidity is similar to JavaScript
+```php
+function getEvens() pure external returns(uint[] memory) {
+  uint[] memory evens = new uint[](5);
+  // Keep track of the index in the new array:
+  uint counter = 0;
+  // Iterate 1 through 10 with a for loop:
+  for (uint i = 1; i <= 10; i++) {
+    // If `i` is even...
+    if (i % 2 == 0) {
+      // Add it to our array
+      evens[counter] = i;
+      // Increment counter to the next empty index in `evens`:
+      counter++;
+    }
+  }
+  return evens;
+}
+```
+This function will return an array with the contents `[2, 4, 6, 8, 10]`.
+
+### `payable` function 
+Because the money ***(Ether)***, the data ***(transaction payload)***, and the contract code itself all live on Ethereum, it's possible for you to call a function and pay money to the contract at the same time.
+
+A `payable` function is a special type of function that allows a smart contract to receive Ether as part of a transaction. `msg.value` is a special variable that refers to the amount of Ether being sent with a transaction. It is used in smart contract functions to determine the amount of Ether that is being sent to the contract, which can then be used for various purposes, such as charging fees or distributing tokens.
+```php
+pragma solidity ^0.8.0;
+
+contract Example {
+    function deposit() payable public {
+        // Do something with the received Ether (msg.value)
+    }
+}
+```
+
+### Withdraws
+😱 What happens after sending Ether to a contract????
+
+After sending Ether to a contract, it gets stored in the contract's Ethereum account, and it will be **trapped** there — unless you add a function to **withdraw** the Ether from the contract.
+
+We can write a function to withdraw Ether from the contract as follows:
+```java
+contract GetPaid is Ownable {
+  function withdraw() external onlyOwner {
+    address payable _owner = address(uint160(owner()));
+    _owner.transfer(address(this).balance);
+  }
+}
+```
+Note that we're using `owner()` and `onlyOwner` from the `Ownable` contract, assuming that was imported.
+
+It is important to note that you cannot transfer Ether to an address unless that address is of type `address payable`. But the `_owner` variable is of type `uint160`, meaning that we must explicitly cast it to `address payable`.
+
+Once you cast the address from `uint160` to `address payable`, you can transfer Ether to that address using the `transfer` function, and `address(this).balance` will return the total balance stored on the contract. So if 100 users had paid 1 Ether to our contract, address(this).balance would equal 100 Ether.
+
 
 
 
