@@ -25,6 +25,9 @@
 - [For Loops](#for-loops)
 - [`payable` function](#payable-function)
 - [Withdraws](#withdraws)
+- [Random Numbers](#random-numbers)
+  - [Random number generation via `keccak256`](#random-number-generation-via-keccak256)
+- [Token on Ethereum](#token-on-ethereum)
   
   
 
@@ -246,7 +249,7 @@ Ownable is a contract (from OpenZeppelin). OpenZeppelin is a library of secure a
 
 ### onlyOwner Function Modifier
 A `function modifier` looks just like a function, but uses the keyword `modifier` instead of the keyword `function`. And it can't be called directly like a function can — instead we can attach the modifier's name at the end of a function definition to change that function's behavior.
-```javascript
+```php
 //modifier function
 modifier onlyOwner() {
     require(isOwner());
@@ -266,7 +269,7 @@ So while there are other ways you can use modifiers, one of the most common use-
 In the case of `onlyOwner`, adding this modifier to a function makes it so only the owner of the contract (you, if you deployed it) can call that function.
 
 Function modifiers can also take arguments. For example:
-```javascript
+```php
 // A mapping to store a user's age:
 mapping (uint => uint) public age;
 
@@ -388,7 +391,7 @@ contract Example {
 After sending Ether to a contract, it gets stored in the contract's Ethereum account, and it will be **trapped** there — unless you add a function to **withdraw** the Ether from the contract.
 
 We can write a function to withdraw Ether from the contract as follows:
-```javascript
+```php
 contract GetPaid is Ownable {
   function withdraw() external onlyOwner {
     address payable _owner = address(uint160(owner()));
@@ -401,6 +404,43 @@ Note that we're using `owner()` and `onlyOwner` from the `Ownable` contract, ass
 It is important to note that you cannot transfer Ether to an address unless that address is of type `address payable`. But the `_owner` variable is of type `uint160`, meaning that we must explicitly cast it to `address payable`.
 
 Once you cast the address from `uint160` to `address payable`, you can transfer Ether to that address using the `transfer` function, and `address(this).balance` will return the total balance stored on the contract. So if 100 users had paid 1 Ether to our contract, address(this).balance would equal 100 Ether.
+> ***👉 Remember:***
+> 
+> ***1. The `transfer` function is a pre-defined function in the `address` data type that can be used to send Ether from one account to another. It is part of the Ethereum Contract ABI (Application Binary Interface), which provides a standard way of interacting with Ethereum contracts. The `transfer` function can be used to send Ether without the need for a smart contract. When the `transfer` function is called, it initiates a transaction that transfers a specified amount of Ether from the calling account to the target address.***
+> 
+> ***2.`address(this).balance` is an expression that returns the current balance of the contract in wei (the smallest unit of Ether). `this` is a keyword that refers to the current contract instance,.***
+
+### Random Numbers
+Generating random numbers in Solidity is ***hard*** because the Ethereum blockchain is designed to be `deterministic`, meaning that the same input will always produce the same output. This property is essential to the functioning of the Ethereum network, as it ensures that all nodes have the same view of the state of the network and that the outcome of a contract execution can be predicted based on its inputs.
+#### Random number generation via `keccak256`
+The best source of randomness we have in Solidity is the keccak256 hash function
+```php
+// Generate a random number between 1 and 100:
+uint randNonce = 0;
+uint random = uint(keccak256(abi.encodePacked(now, msg.sender, randNonce))) % 100;
+randNonce++;
+uint random2 = uint(keccak256(abi.encodePacked(now, msg.sender, randNonce))) % 100;
+```
+
+### Token on Ethereum
+A `token` on Ethereum is basically just a `smart contract` that follows some common rules — namely it implements a standard set of functions that all other token contracts share, such as `transferFrom(address _from, address _to, uint256 _amount)` and `balanceOf(address _owner)`.
+
+In Ethereum, a token smart contract typically defines the total supply of tokens that will exist, the name of the token, and the symbol used to represent the token. The contract may also include functions for transferring tokens from one address to another, checking the balance of a particular address, and managing the ownership of the tokens.
+
+Internally the smart contract usually has a mapping, `mapping(address => uint256) balances`, that keeps track of how much balance each address has.
+
+So basically a token is just a contract that keeps track of who owns how much of that token, and some functions so those users can transfer their tokens to other addresses.
+
+`ERC20` tokens are really cool for tokens that act like ***currencies***.
+
+`ERC721` tokens are not interchangeable since each one is assumed to be unique, and are not divisible. You can only trade them in whole units, and each one has a unique ID. => NFT!!!!😱
+
+
+
+
+
+
+
 
 
 
