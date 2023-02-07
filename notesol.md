@@ -388,7 +388,7 @@ contract Example {
 After sending Ether to a contract, it gets stored in the contract's Ethereum account, and it will be **trapped** there — unless you add a function to **withdraw** the Ether from the contract.
 
 We can write a function to withdraw Ether from the contract as follows:
-```java
+```javascript
 contract GetPaid is Ownable {
   function withdraw() external onlyOwner {
     address payable _owner = address(uint160(owner()));
