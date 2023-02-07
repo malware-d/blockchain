@@ -11,7 +11,7 @@
 - [msg.sender](#msgsender)
 - [require](#require)
 - [inheritance](#inheritance)
-- [Data location](#data-location)
+- [Data location (memory/storage/calldata)](#data-location-memorystoragecalldata)
 - [Internal/External](#internalexternal)
 - [Interacting with other contracts](#interacting-with-other-contracts)
 - [Immutability of Contracts](#immutability-of-contracts)
@@ -20,6 +20,9 @@
 - [Gas fee](#gas-fee)
   - [Struct packing to save gas](#struct-packing-to-save-gas)
 - [Time Units](#time-units)
+- [Saving Gas With 'View' Functions](#saving-gas-with-view-functions)
+- [Storage is Expensive](#storage-is-expensive)
+  
   
 
 ### Contract
@@ -72,7 +75,7 @@ function _addToArray(uint _number) private {
 
 Now **only** other functions **within** our contract will be able to call this function and add to the numbers array.
 
-> 👉 Note: If the function is set to `private`: Even though new contracts are inherited, function calls from this contracts cannot be made. If you want, let's use `internal`!!!
+> ***👉 Note: If the function is set to `private`: Even though new contracts are inherited, function calls from this contracts cannot be made. If you want, let's use `internal`!!!***
 #### Function modifiers
 The function doesn't change state in Solidity — e.g. it doesn't change any values or write anything.
 
@@ -92,7 +95,7 @@ Encoding  into binary representation using ***abi.encodePacked()*** ensures that
 //6e91ec6b618bb462a4a6ee5aa2cb0e9cf30f7a052bb467b0ba58b8748c00d2e5
 keccak256(abi.encodePacked("kimkhuongduy"));
 ```
-> 😱 Note: With strings, we have to compare their keccak256 hashes to check equality.
+> ***😱 Note: With strings, we have to compare their keccak256 hashes to check equality.***
 
 ### Events
 `Events` are a way for your contract to communicate that something happened on the blockchain to your app front-end, which can be 'listening' for certain events and take action when they happen.
@@ -169,10 +172,11 @@ contract BabyDoge is Doge {
 }
 ```
 
-### Data location
+### Data location (memory/storage/calldata)
 There are two locations you can store variables — in `storage` and in `memory`. 
 - ***Storage*** refers to variables stored permanently on the blockchain. 
 - ***Memory*** variables are temporary, and are erased between external function calls to your contract.
+> ***👉 Note: `calldata` is somehow similar to `memory`, but it's only available to `external` functions.***
 ```php
 Zombie storage myZombie = zombies[_zombieId];
 //myZombie is a pointer to zombie[_zombieId]
@@ -229,7 +233,7 @@ Ownable is a contract (from OpenZeppelin). OpenZeppelin is a library of secure a
 1. When a contract is created, its constructor sets the `owner` to `msg.sender` (the person who deployed it)
 2. It adds an `onlyOwner` modifier, which can restrict access to certain functions to only the `owner`
 3. It allows you to transfer the contract to a new owner
-> 👉 Note: onlyOwner is such a common requirement for contracts that most Solidity DApps start with a copy/paste of this Ownable contract, and then their first contract inherits from it.
+> ***👉 Note: onlyOwner is such a common requirement for contracts that most Solidity DApps start with a copy/paste of this Ownable contract, and then their first contract inherits from it.***
 
 ### onlyOwner Function Modifier
 A `function modifier` looks just like a function, but uses the keyword `modifier` instead of the keyword `function`. And it can't be called directly like a function can — instead we can attach the modifier's name at the end of a function definition to change that function's behavior.
@@ -302,7 +306,38 @@ You'll also want to cluster identical data types together (i.e. put them next to
 
 ### Time Units
 The variable `now` will return the current unix timestamp of the latest block (the number of seconds that have passed since January 1st 1970).
-> Note: Unix time is traditionally stored in a 32-bit number.
+> ***👉 Note: Unix time is traditionally stored in a 32-bit number.***
+
+### Saving Gas With 'View' Functions
+`view` functions don't cost any gas when they're called `externally` by a user.
+
+This is because `view` functions don't actually change anything on the blockchain – they only read the data. So marking a function with `view` tells `web3.js` that it only needs to query your local Ethereum node to run the function, and it doesn't actually have to create a transaction on the blockchain (which would need to be run on every single node, and cost gas).
+
+> ***👉 Note: If a `view` function is called internally from another function in the same contract that is not a `view` function, it will still cost gas. This is because the other function creates a transaction on Ethereum, and will still need to be verified from every node. So `view` functions are only free when they're called externally.***
+
+### Storage is Expensive
+One of the more expensive operations in Solidity is using `storage` — particularly writes. This is because every time you write or change a piece of data, it’s written permanently to the blockchain. Forever! Thousands of nodes across the world need to store that data on their hard drives, and this amount of data keeps growing over time as the blockchain grows.
+
+In most programming languages, looping over large data sets is expensive. But in Solidity, this is way cheaper than using `storage` if it's in an `external view` function, since `view` functions don't cost your users any gas. (And gas costs your users real money!).
+
+Declaring arrays in memory: 
+```php
+function getArray() external pure returns(uint[] memory) {
+  // Instantiate a new array in memory with a length of 3
+  uint[] memory values = new uint[](3);
+
+  // Put some values to it
+  values[0] = 1;
+  values[1] = 2;
+  values[2] = 3;
+
+  return values;
+}
+```
+The array will only exist until the end of the function call, and this is a lot cheaper gas-wise than updating an array in `storage` — free if it's a `view` function called externally.
+> ***👉 Note: memory arrays must be created with a predefined length argument.***
+
+
 
 
 
