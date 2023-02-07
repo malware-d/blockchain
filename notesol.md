@@ -246,7 +246,7 @@ Ownable is a contract (from OpenZeppelin). OpenZeppelin is a library of secure a
 
 ### onlyOwner Function Modifier
 A `function modifier` looks just like a function, but uses the keyword `modifier` instead of the keyword `function`. And it can't be called directly like a function can — instead we can attach the modifier's name at the end of a function definition to change that function's behavior.
-```php
+```javascript
 //modifier function
 modifier onlyOwner() {
     require(isOwner());
@@ -266,7 +266,7 @@ So while there are other ways you can use modifiers, one of the most common use-
 In the case of `onlyOwner`, adding this modifier to a function makes it so only the owner of the contract (you, if you deployed it) can call that function.
 
 Function modifiers can also take arguments. For example:
-```php
+```javascript
 // A mapping to store a user's age:
 mapping (uint => uint) public age;
 
