@@ -28,6 +28,9 @@
 - [Random Numbers](#random-numbers)
   - [Random number generation via `keccak256`](#random-number-generation-via-keccak256)
 - [Token on Ethereum](#token-on-ethereum)
+- [balanceOf \& ownerOf](#balanceof--ownerof)
+  - [balanceOf](#balanceof)
+  - [ownerOf](#ownerof)
   
   
 
@@ -434,6 +437,19 @@ So basically a token is just a contract that keeps track of who owns how much of
 `ERC20` tokens are really cool for tokens that act like ***currencies***.
 
 `ERC721` tokens are not interchangeable since each one is assumed to be unique, and are not divisible. You can only trade them in whole units, and each one has a unique ID. => NFT!!!!😱
+
+### balanceOf & ownerOf
+#### balanceOf
+```php
+function balanceOf(address _owner) external view returns (uint256 _balance);
+```
+This function takes an ***address***, and returns how many tokens that address owns. In ***CryptoZombies*** case, our "tokens" are Zombies.
+
+#### ownerOf
+```php
+function ownerOf(uint256 _tokenId) external view returns (address _owner);
+```
+This function takes a token ID (in our case, a Zombie ID), and returns the address of the person who owns it.
 
 
 
