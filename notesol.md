@@ -31,6 +31,8 @@
 - [balanceOf \& ownerOf](#balanceof--ownerof)
   - [balanceOf](#balanceof)
   - [ownerOf](#ownerof)
+- [ERC721: Transfer Logic](#erc721-transfer-logic)
+- [Preventing Overflows](#preventing-overflows)
   
   
 
@@ -125,10 +127,13 @@ function add(uint _x, uint _y) public returns (uint) {
   return result;
 }
 ```
+Emit a transfer event: The contract should emit a transfer event to notify the rest of the Ethereum network that the token ownership has changed. This allows other contracts and dApps to react to the transfer, for example, to update their own records of token ownership.
 
 ### Mapping & Addresses
 #### Address
-The Ethereum blockchain is made up of `accounts`. Each account has an `address`. An address is owned by a **specific** user (or a smart contract).  An address in Solidity is a `160-bit` value that represents an Ethereum address, which is a unique identifier for an account on the Ethereum blockchain
+The Ethereum blockchain is made up of `accounts`. Each account has an `address`. An address is owned by a **specific** user (or a smart contract).  An address in Solidity is a `160-bit` value that represents an Ethereum address, which is a unique identifier for an account on the Ethereum blockchain.
+
+Address `0` is an address that no one has the private key of. Send tokens to it, this means ***"burning" a token***, essentially making it unrecoverable.
 #### Mapping
 A mapping is a `key-value` store for storing and looking up data.
 ```php
@@ -450,6 +455,48 @@ This function takes an ***address***, and returns how many tokens that address o
 function ownerOf(uint256 _tokenId) external view returns (address _owner);
 ```
 This function takes a token ID (in our case, a Zombie ID), and returns the address of the person who owns it.
+
+### ERC721: Transfer Logic
+Note that the ERC721 spec has 2 different ways to transfer tokens:
+```php
+function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
+
+//and
+
+function approve(address _approved, uint256 _tokenId) external payable;
+
+function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
+```
+The first way is the token's owner calls `transferFrom` with his `address` as the `_from` parameter, the `address` he wants to transfer to as the `_to` parameter, and the `_tokenId` of the token he wants to transfer.
+
+The second way is the token's owner first calls `approve` with the address he wants to transfer to, and the `_tokenID`. The contract then stores who is approved to take a token, usually in a `mapping (uint256 => address)`. Then, when the owner or the approved address calls `transferFrom`, the contract checks if that `msg.sender` is the owner or is approved by the owner to take the token, and if so it transfers the token to him.
+
+### Preventing Overflows
+To prevent ***Overflows*** and ***Underflows***, OpenZeppelin has created a library called ***SafeMath*** that prevents these issues by default.
+
+`library` are similar to `contract`. 
+```php
+using SafeMath for uint;
+// now we can use these methods on any uint
+uint test = 2;
+test = test.mul(3); // test now equals 6
+test = test.add(5); // test now equals 11
+```
+Let's look at the code behind `add` to see what SafeMath does:
+```php
+function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  uint256 c = a + b;
+  assert(c >= a);
+  return c;
+}
+```
+Basically `add` just adds 2 uints like +, but it also contains an `assert` statement to make sure the sum is greater than **a**. This protects us from overflows.
+
+`assert` is similar to `require`, where it will throw an error if false. The difference between `assert` and `require` is that require will refund the user the rest of their gas when a function fails, whereas assert will not. So most of the time you want to use require in your code; `assert` is typically used when something has gone horribly wrong with the code (like a uint overflow).
+
+So, simply put, SafeMath's add, sub, mul, and div are functions that do the basic 4 math operations, but ***throw an error if an overflow or underflow occurs***.
+
+
 
 
 
