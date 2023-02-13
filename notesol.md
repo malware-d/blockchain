@@ -33,6 +33,7 @@
   - [ownerOf](#ownerof)
 - [ERC721: Transfer Logic](#erc721-transfer-logic)
 - [Preventing Overflows](#preventing-overflows)
+- [Comments](#comments)
   
   
 
@@ -495,6 +496,50 @@ Basically `add` just adds 2 uints like +, but it also contains an `assert` state
 `assert` is similar to `require`, where it will throw an error if false. The difference between `assert` and `require` is that require will refund the user the rest of their gas when a function fails, whereas assert will not. So most of the time you want to use require in your code; `assert` is typically used when something has gone horribly wrong with the code (like a uint overflow).
 
 So, simply put, SafeMath's add, sub, mul, and div are functions that do the basic 4 math operations, but ***throw an error if an overflow or underflow occurs***.
+
+If variables are `uint16/uint32`, we need to use corresponding library: `SafeMath16/SafeMath32`.
+
+If we use SafeMath for uint16/uint32,  it won't actually protect us from overflow since it will convert these types to `uint256`:
+```php
+function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  uint256 c = a + b;
+  assert(c >= a);
+  return c;
+}
+
+// If we call `.add` on a `uint8`, it gets converted to a `uint256`.
+// So then it won't overflow at 2^8, since 256 is a valid `uint256`.  
+// So, we need:
+using SafeMath32 for uint32;
+using SafeMath16 for uint16;
+```
+### Comments
+The standard in the Solidity community is to use a format called `natspec`, which looks like this:
+```php
+/// @title A contract for basic math operations
+/// @author H4XF13LD MORRIS 💯💯😎💯💯
+/// @notice For now, this contract just adds a multiply function
+contract Math {
+  /// @notice Multiplies 2 numbers together
+  /// @param x the first uint.
+  /// @param y the second uint.
+  /// @return z the product of (x * y)
+  /// @dev This function does not currently check for overflows
+  function multiply(uint x, uint y) returns (uint z) {
+    // This is just a normal comment, and won't get picked up by natspec
+    z = x * y;
+  }
+}
+```
+`@title` and `@author` are straightforward.
+
+`@notice` explains to a user what the contract / function does. `@dev` is for explaining extra details to developers.
+
+`@param` and `@return` are for describing what each parameter and return value of a function are for.
+
+Note that you don't always have to use all of these tags for every function — all tags are optional. But at the very least, leave a `@dev` note explaining what each function does.
+
+
 
 
 
