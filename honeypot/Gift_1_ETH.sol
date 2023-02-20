@@ -34,4 +34,3 @@ contract Gift_1_ETH
         }
     }
 }
-aaa
